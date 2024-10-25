@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api')]
 class AuthController extends AbstractController
@@ -19,15 +20,27 @@ class AuthController extends AbstractController
         Request $request, 
         UserPasswordHasherInterface $hasher, 
         EntityManagerInterface $em, 
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        ValidatorInterface $validator
     ): JsonResponse 
     {
         try {
             $user = $serializer->deserialize($request->getContent(), User::class, 'json');
-            
+
+            // Validation des Assert 
+            $errors = $validator->validate($user);
+            if (count($errors) > 0) {
+                $errorsArray = [];
+                foreach ($errors as $error) {
+                    $errorsArray[$error->getPropertyPath()][] = $error->getMessage();
+                }
+                return $this->json([
+                    'status' => 'error',
+                    'errors' => $errorsArray
+                ], 400);
+            }
             // Hash du mot de passe
             $hashedPassword = $hasher->hashPassword($user, $user->getPassword());
-            // TODO verif data is valid
             $user->setPassword($hashedPassword);
             $user->setRoles(['ROLE_USER']);
             
@@ -35,11 +48,12 @@ class AuthController extends AbstractController
             $em->flush();
             
             return $this->json([
-                'message' => 'User created successfully'
-            ], 201);
+              'status' => 'success',
+              'message' => 'Utilisateur enrengistré !'
+          ], 201);
         } catch (\Exception $e) {
             return $this->json([
-                'error' => 'Error creating user: ' . $e->getMessage()
+                'error' => 'Erreur lors de la création: ' . $e->getMessage()
             ], 400);
         }
     }
