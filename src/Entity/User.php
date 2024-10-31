@@ -52,10 +52,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         max: 4096, 
         maxMessage: 'Le mot de passe ne peut pas dépasser {{ limit }} caractères'
     )]
-    #[Assert\Regex(
-        pattern: '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-        message: 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'
-    )]
+    // #[Assert\Regex(
+    //     pattern: '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+    //     message: 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'
+    // )]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]

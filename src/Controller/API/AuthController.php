@@ -57,4 +57,31 @@ class AuthController extends AbstractController
             ], 400);
         }
     }
+    #[Route('/delete-account', methods: ['DELETE'])]
+    public function deleteAccount(EntityManagerInterface $em ): JsonResponse 
+    {
+        try {
+            $user = $this->getUser();
+            if (!$user) {
+                return $this->json([
+                    'status' => 'error',
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+    
+            $em->remove($user);
+            $em->flush();
+    
+            return $this->json([
+                'status' => 'success',
+                'message' => 'Compte supprimé avec succès'
+            ], 200);
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+            ], 400);
+        }
+    
+    }
 }
