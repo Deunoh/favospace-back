@@ -6,6 +6,7 @@ use App\Repository\SpaceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: SpaceRepository::class)]
 class Space
@@ -13,9 +14,11 @@ class Space
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['space_list', 'space_marks'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['space_list', 'space_marks'])]
     private ?string $name = null;
 
     #[ORM\ManyToOne(inversedBy: 'spaces')]
@@ -25,6 +28,7 @@ class Space
      * @var Collection<int, Mark>
      */
     #[ORM\OneToMany(targetEntity: Mark::class, mappedBy: 'space', orphanRemoval: true)]
+    #[Groups(['space_marks'])]
     private Collection $marks;
 
     public function __construct()

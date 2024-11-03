@@ -16,6 +16,15 @@ class SpaceRepository extends ServiceEntityRepository
         parent::__construct($registry, Space::class);
     }
 
+    public function findSpaceByUser($user)
+    {
+        return $this->createQueryBuilder('s')
+            ->select('s.id', 's.name')
+            ->where('s.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
     //    /**
     //     * @return Space[] Returns an array of Space objects
     //     */

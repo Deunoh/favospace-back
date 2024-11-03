@@ -57,6 +57,27 @@ class AuthController extends AbstractController
             ], 400);
         }
     }
+    #[Route('/verify-user', methods: ['GET'])]
+    public function verifyUser(): JsonResponse
+    {
+        /** @var User|null */
+        $user = $this->getUser();
+    
+        if (!$user instanceof User) {
+            return $this->json([
+                'status' => 'error',
+                'message' => 'Non authentifié'
+            ], 401);
+        }
+    
+        return $this->json([
+            'user' => [
+                'id' => $user->getId(),
+                'name' => $user->getName(),
+                'email' => $user->getEmail(),
+            ]
+        ]);
+    }
     #[Route('/delete-account', methods: ['DELETE'])]
     public function deleteAccount(EntityManagerInterface $em ): JsonResponse 
     {

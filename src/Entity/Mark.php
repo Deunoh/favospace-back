@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\MarkRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: MarkRepository::class)]
 class Mark
@@ -12,12 +13,15 @@ class Mark
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['space_marks'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['space_marks'])]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['space_marks'])]
     private ?string $url = null;
 
     #[ORM\ManyToOne(inversedBy: 'marks')]
