@@ -4,11 +4,16 @@ namespace App\Controller\API;
 
 use App\Entity\Space;
 use App\Repository\SpaceRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/space', name: 'app_api_space_', format: 'json')]
 class SpaceController extends AbstractController
@@ -32,4 +37,41 @@ class SpaceController extends AbstractController
         
         return $this->json($space, Response::HTTP_OK, [], ['groups' => 'space_marks']);
     }
-}
+
+    #[Route('/add', name:'add', methods:['POST'])]
+    #[IsGranted('ROLE_USER')]  
+    public function add(
+        Request $request, 
+        ValidatorInterface $validator, 
+        EntityManagerInterface $entityManager, 
+        SerializerInterface $serializer  
+    ): JsonResponse  
+    {
+        // Désérialiser les données
+        $newSpace = $serializer->deserialize(
+            $request->getContent(), 
+            Space::class, 
+            'json'
+        );
+    
+        // Associer l'espace à l'utilisateur connecté
+        $newSpace->setUser($this->getUser());
+    
+        // Valider
+        $errors = $validator->validate($newSpace);
+        if (count($errors) > 0) {
+            return $this->json($errors, Response::HTTP_BAD_REQUEST);
+        }
+    
+        // Sauvegarder (tester maintenant)
+        $entityManager->persist($newSpace);
+        $entityManager->flush();
+    
+        return $this->json(
+            $newSpace, 
+            Response::HTTP_CREATED, 
+            [], 
+            ['groups' => 'space_list']
+        );
+    }
+};
