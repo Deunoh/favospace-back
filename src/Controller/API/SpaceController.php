@@ -74,4 +74,36 @@ class SpaceController extends AbstractController
             ['groups' => 'space_list']
         );
     }
+
+    #[Route('/{id}/delete', name:'delete', methods:['DELETE'])]
+    #[IsGranted('ROLE_USER')]
+    public function delete(
+        Space $space,
+        EntityManagerInterface $entityManager
+    ): JsonResponse 
+    {
+        // Vérifier si l'espace appartient à l'utilisateur connecté
+        if ($space->getUser() !== $this->getUser()) {
+            return $this->json(
+                ['message' => 'Vous n\'êtes pas autorisé à supprimer cet espace'],
+                Response::HTTP_FORBIDDEN
+            );
+        }
+    
+        try {
+            // Supprimer l'espace et ses marks associés (grâce à orphanRemoval=true dans l'entité)
+            $entityManager->remove($space);
+            $entityManager->flush();
+    
+            return $this->json(
+                ['message' => 'Espace supprimé avec succès'],
+                Response::HTTP_OK
+            );
+        } catch (\Exception $e) {
+            return $this->json(
+                ['message' => 'Erreur lors de la suppression de l\'espace'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
 };
