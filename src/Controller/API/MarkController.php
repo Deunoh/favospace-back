@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -65,5 +66,33 @@ class MarkController extends AbstractController
 
         // 8. Je retourne le mark créer (peut être renvoyé un msg)
         return $this->json($mark, Response::HTTP_CREATED, [], ['groups' => 'space_marks']);
+    }
+
+    #[Route('/{id}/delete', name:'delete', methods:['DELETE'])]
+    #[IsGranted('ROLE_USER')]
+    public function delete(Mark $mark, EntityManagerInterface $entityManager): JsonResponse
+    {
+        // est ce que le mark appartient bien à un espace de l'utilisateur ?
+        if($mark->getSpace()->getUser() !== $this->getUser()){
+            return $this->json(
+                ['message' => 'Vous n\'êtes pas autorisé à supprimer ce favori'],
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
+        try {
+            $entityManager->remove($mark);
+            $entityManager->flush();
+    
+            return $this->json(
+                ['message' => 'Favori supprimé avec succès'],
+                Response::HTTP_OK
+            );
+        } catch (\Exception $e) {
+            return $this->json(
+                ['message' => 'Erreur lors de la suppression du favori'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 }
