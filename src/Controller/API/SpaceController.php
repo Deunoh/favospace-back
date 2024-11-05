@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -106,4 +107,53 @@ class SpaceController extends AbstractController
             );
         }
     }
+    #[Route('/{id}/edit', name:'edit', methods:['PATCH'])]
+    #[IsGranted('ROLE_USER')]
+    public function edit(
+        Space $space,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator
+    ): JsonResponse 
+    {
+    // Vérifier si l'espace appartient à l'utilisateur connecté
+    if ($space->getUser() !== $this->getUser()) {
+        return $this->json(
+            ['message' => 'Vous n\'êtes pas autorisé à modifier cet espace'],
+            Response::HTTP_FORBIDDEN
+        );
+    }
+
+    try {
+        // Désérialiser et mettre à jour l'espace existant, ne pas écraser l'espace existant sinon perte de l'utilisateur associé
+        $updatedSpace = $serializer->deserialize(
+            $request->getContent(),
+            Space::class,
+            'json',
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $space]
+        );
+
+        $errors = $validator->validate($updatedSpace);
+        if (count($errors) > 0) {
+            return $this->json($errors, Response::HTTP_BAD_REQUEST);
+        }
+
+        $entityManager->flush();
+
+        return $this->json(
+            $updatedSpace,
+            Response::HTTP_OK,
+            [],
+            ['groups' => 'space_list']
+        );
+
+    } catch (\Exception $e) {
+        return $this->json(
+            ['message' => 'Erreur lors de la modification de l\'espace'],
+            Response::HTTP_INTERNAL_SERVER_ERROR
+        );
+    }
+}
+
 };

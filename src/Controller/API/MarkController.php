@@ -95,4 +95,49 @@ class MarkController extends AbstractController
             );
         }
     }
+    #[Route('/{id}/edit', name:'edit', methods:['PATCH'])]
+    #[IsGranted('ROLE_USER')]
+    public function edit(
+        Mark $mark,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator
+    ): JsonResponse
+    {
+        if ($mark->getSpace()->getUser() !== $this->getUser()) {
+            return $this->json(
+                ['message' => 'Vous n\'êtes pas autorisé à modifier ce favoris'],
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
+        try{
+            $updatedMark = $serializer->deserialize(
+                $request->getContent(),
+                Mark::class,
+                'json',
+                [AbstractNormalizer::OBJECT_TO_POPULATE => $mark]
+            );
+
+            $errors = $validator->validate($updatedMark);
+            if (count($errors) > 0){
+                return $this->json($errors, Response::HTTP_BAD_REQUEST);
+            }
+
+            $entityManager->flush();
+
+            return $this->json(
+                $updatedMark, 
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'space_marks']
+            );
+        } catch (\Exception $e) {
+            return $this->json(
+                ['message' => 'Erreur lors de la modification du favoris'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
 }
