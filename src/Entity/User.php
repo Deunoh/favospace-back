@@ -71,7 +71,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Space>
      */
-    #[ORM\OneToMany(targetEntity: Space::class, mappedBy: 'user')]
+    #[ORM\OneToMany(
+        mappedBy: 'user', 
+        targetEntity: Space::class, 
+        orphanRemoval: true, 
+        cascade: ['remove']  
+    )]
     private Collection $spaces;
 
     public function __construct()
