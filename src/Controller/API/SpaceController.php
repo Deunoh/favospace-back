@@ -2,6 +2,7 @@
 
 namespace App\Controller\API;
 
+use App\Entity\Mark;
 use App\Entity\Space;
 use App\Repository\SpaceRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -158,6 +159,46 @@ class SpaceController extends AbstractController
             Response::HTTP_INTERNAL_SERVER_ERROR
         );
     }
+}
+
+#[Route('/clone/{token}', name: 'clone', methods: ['POST'])]
+#[IsGranted('ROLE_USER')]
+public function cloneSpace(
+    string $token,
+    SpaceRepository $repository,
+    EntityManagerInterface $entityManager
+): JsonResponse {
+    // Trouver l'espace source par le token
+    $sourceSpace = $repository->findOneBy(['shareToken' => $token]);
+    
+    if (!$sourceSpace) {
+        return $this->json(['message' => 'Espace non trouvé'], Response::HTTP_NOT_FOUND);
+    }
+
+    // Créer un nouvel espace
+    $newSpace = new Space();
+    $newSpace->setName($sourceSpace->getName() . ' (' . $sourceSpace->getUser()->getName() . ')');
+    $newSpace->setUser($this->getUser());
+    $newSpace->setShareToken(bin2hex(random_bytes(32)));
+
+    // Cloner les marks
+    foreach ($sourceSpace->getMarks() as $sourceMark) {
+        $newMark = new Mark();
+        $newMark->setName($sourceMark->getName());
+        $newMark->setUrl($sourceMark->getUrl());
+        $newMark->setSpace($newSpace);
+        $entityManager->persist($newMark);
+    }
+
+    $entityManager->persist($newSpace);
+    $entityManager->flush();
+
+    return $this->json(
+        $newSpace,
+        Response::HTTP_CREATED,
+        [],
+        ['groups' => 'space_list']
+    );
 }
 
 };
