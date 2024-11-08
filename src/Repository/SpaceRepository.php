@@ -17,14 +17,13 @@ class SpaceRepository extends ServiceEntityRepository
     }
 
     public function findSpaceByUser($user)
-    {
-        return $this->createQueryBuilder('s')
-            ->select('s.id', 's.name')
-            ->where('s.user = :user')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-    }
+{
+    return $this->createQueryBuilder('s')
+        ->where('s.user = :user')
+        ->setParameter('user', $user)
+        ->getQuery()
+        ->getResult();
+}
     //    /**
     //     * @return Space[] Returns an array of Space objects
     //     */

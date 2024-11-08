@@ -57,6 +57,10 @@ class SpaceController extends AbstractController
     
         // Associer l'espace à l'utilisateur connecté
         $newSpace->setUser($this->getUser());
+
+        // Ajouter le token de partage
+
+        $newSpace->setShareToken(bin2hex(random_bytes(32)));
     
         // Valider
         $errors = $validator->validate($newSpace);

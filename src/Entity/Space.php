@@ -39,6 +39,10 @@ class Space
     #[Groups(['space_marks'])]
     private Collection $marks;
 
+    #[ORM\Column(length: 255)]
+    #[Groups(['space_list'])]
+    private ?string $shareToken = null;
+
     public function __construct()
     {
         $this->marks = new ArrayCollection();
@@ -99,6 +103,18 @@ class Space
                 $mark->setSpace(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getShareToken(): ?string
+    {
+        return $this->shareToken;
+    }
+
+    public function setShareToken(string $shareToken): static
+    {
+        $this->shareToken = $shareToken;
 
         return $this;
     }
