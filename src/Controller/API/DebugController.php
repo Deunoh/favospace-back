@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Controller\API;
+namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
+#[Route('/api', name: 'app_debug_', format: 'json')]
 class DebugController extends AbstractController
 {
-    /**
-     * @Route("/api/debug", name="debug", methods={"GET"})
-     */
+    #[Route('/debug', name: 'debug', methods: ['GET'])]
     public function debug(Request $request): JsonResponse
     {
         return new JsonResponse([
@@ -25,9 +24,7 @@ class DebugController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/api/test", name="test", methods={"GET"})
-     */
+    #[Route('/test', name: 'test', methods: ['GET'])]
     public function test(): JsonResponse
     {
         return new JsonResponse([
