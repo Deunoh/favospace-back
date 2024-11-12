@@ -3,9 +3,9 @@ lexik_jwt_authentication:
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
     token_ttl: 604800 
-    token_extractors:
-        authorization_header:
-            enabled: true
-            prefix: Bearer
-            name: Authorization
+    # token_extractors:
+    #     authorization_header:
+    #         enabled: true
+    #         prefix: Bearer
+    #         name: Authorization
     # token valable 1 semaine, 2592000 pour 1 mois

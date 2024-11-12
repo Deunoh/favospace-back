@@ -27,44 +27,6 @@ class SpaceController extends AbstractController
         $spaces = $repository->findSpaceByUser($this->getUser());
         return $this->json($spaces, Response::HTTP_OK, [], ['groups' => 'space_list']);
     }
-    // #[Route('/browse', name: 'browse', methods: ['GET'])]
-    // public function browse(Request $request): JsonResponse
-    // {
-    //     // Récupérer et propager le token
-    //     $apacheHeaders = apache_request_headers();
-    //     if (isset($apacheHeaders['Authorization'])) {
-    //         $auth = $apacheHeaders['Authorization'];
-    //         $_SERVER['HTTP_AUTHORIZATION'] = $auth;
-    //         $request->headers->set('Authorization', $auth);
-    //     }
-    
-    //     // Debug
-    //     $token = $request->headers->get('Authorization');
-    //     $serverToken = $request->server->get('HTTP_AUTHORIZATION');
-    
-    //     // Debug après propagation
-    //     $debug = [
-    //         'token_from_headers' => $token,
-    //         'token_from_server' => $serverToken,
-    //         'apache_headers' => $apacheHeaders,
-    //         'all_headers' => $request->headers->all(),
-    //         'method' => $request->getMethod(),
-    //         'server_vars' => array_filter($_SERVER, function($key) {
-    //             return strpos($key, 'HTTP_') === 0 || strpos($key, 'AUTH') !== false;
-    //         }, ARRAY_FILTER_USE_KEY)
-    //     ];
-    
-    //     // Pour tester si le token est valide
-    //     try {
-    //         $tokenParts = explode('.', str_replace('Bearer ', '', $token));
-    //         $payload = json_decode(base64_decode($tokenParts[1]), true);
-    //         $debug['token_payload'] = $payload;
-    //     } catch (\Exception $e) {
-    //         $debug['token_error'] = $e->getMessage();
-    //     }
-    
-    //     return new JsonResponse(['debug' => $debug]);
-    // }
 
     // Recuperer les marks associé à l'espace
     #[Route('/{id}/marks', name: 'marks', methods: ['GET'])]
