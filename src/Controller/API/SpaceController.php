@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class SpaceController extends AbstractController
 {
     #[Route('/browse', name: 'browse', methods: ['GET'])]
-    // #[IsGranted('ROLE_USER')]  // Pour s'assuré que l'utilisateur est connecté (sécu)
+    #[IsGranted('ROLE_USER')]  // Pour s'assuré que l'utilisateur est connecté (sécu)
     public function browse(SpaceRepository $repository): JsonResponse
     {
         $spaces = $repository->findSpaceByUser($this->getUser());
