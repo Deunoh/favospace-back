@@ -15,13 +15,21 @@ class DebugController extends AbstractController
   #[IsGranted('PUBLIC_ACCESS')]
   public function debug(Request $request): JsonResponse
   {
-      $allHeaders = getallheaders(); 
+      $allEnv = [];
+      foreach ($_SERVER as $key => $value) {
+          if (str_starts_with($key, 'HTTP_')) {
+              $allEnv[$key] = $value;
+          }
+      }
+  
       return new JsonResponse([
           'headers' => $request->headers->all(),
           'authorization' => $request->headers->get('Authorization'),
           'server_auth' => $request->server->get('HTTP_AUTHORIZATION'),
-          'all_headers' => $allHeaders, 
-          'all_server' => $request->server->all(), 
+          'all_headers' => getallheaders(),
+          'all_server' => $request->server->all(),
+          'env_vars' => $allEnv,
+          'raw_auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
           'method' => $request->getMethod(),
           'content_type' => $request->headers->get('Content-Type'),
           'request_uri' => $request->getRequestUri(),
