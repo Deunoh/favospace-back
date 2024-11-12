@@ -41,8 +41,7 @@ security:
     - { path: ^/api/login, roles: PUBLIC_ACCESS }
     - { path: ^/api/register, roles: PUBLIC_ACCESS } 
     - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
-    - { path: ^/api, roles: PUBLIC_ACCESS }
-    # - { path: ^/api, roles: ROLE_USER } 
+    - { path: ^/api, roles: ROLE_USER } 
 when@test:
     security:
         password_hashers:
