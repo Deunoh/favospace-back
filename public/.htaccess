@@ -1,15 +1,14 @@
-# Authorization header
-SetEnvIf Authorization "^Bearer (.*)$" HTTP_AUTHORIZATION=$1
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteCond %{HTTP:Authorization} ^Bearer\ (.*)$
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 </IfModule>
 
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Origin "https://favospace.fr"
     Header set Access-Control-Allow-Methods "GET,POST,OPTIONS,DELETE,PUT,PATCH"
     Header set Access-Control-Allow-Headers "Authorization, Content-Type, Accept"
-    Header set Access-Control-Expose-Headers "*"
+    Header set Access-Control-Allow-Credentials "true"
 </IfModule>
