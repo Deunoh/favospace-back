@@ -10,10 +10,17 @@ class AuthorizationHeaderListener
     {
         $request = $event->getRequest();
         
-        // Vérifie si le header Authorization est présent
-        if ($authHeader = $request->headers->get('Authorization')) {
-            // Force la création de HTTP_AUTHORIZATION
+        // Récupérer le header des différentes sources possibles
+        $authHeader = $request->headers->get('Authorization')
+            ?? $_SERVER['HTTP_AUTHORIZATION'] 
+            ?? apache_request_headers()['Authorization'] 
+            ?? null;
+
+        if ($authHeader) {
+            // Mettre à jour toutes les sources possibles
+            $_SERVER['HTTP_AUTHORIZATION'] = $authHeader;
             $request->server->set('HTTP_AUTHORIZATION', $authHeader);
+            $request->headers->set('Authorization', $authHeader);
         }
     }
 }
