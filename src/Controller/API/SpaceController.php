@@ -20,13 +20,32 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/api/space', name: 'app_api_space_', format: 'json')]
 class SpaceController extends AbstractController
 {
+    // #[Route('/browse', name: 'browse', methods: ['GET'])]
+    // #[IsGranted('ROLE_USER')]  // Pour s'assuré que l'utilisateur est connecté (sécu)
+    // public function browse(SpaceRepository $repository): JsonResponse
+    // {
+    //     $spaces = $repository->findSpaceByUser($this->getUser());
+    //     return $this->json($spaces, Response::HTTP_OK, [], ['groups' => 'space_list']);
+    // }
     #[Route('/browse', name: 'browse', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')]  // Pour s'assuré que l'utilisateur est connecté (sécu)
-    public function browse(SpaceRepository $repository): JsonResponse
-    {
-        $spaces = $repository->findSpaceByUser($this->getUser());
-        return $this->json($spaces, Response::HTTP_OK, [], ['groups' => 'space_list']);
-    }
+    #[IsGranted('ROLE_USER')] 
+    public function browse(Request $request): JsonResponse
+{
+    // Debug
+    $token = $request->headers->get('Authorization');
+    $serverToken = $request->server->get('HTTP_AUTHORIZATION');
+    $apacheHeaders = apache_request_headers();
+
+    return new JsonResponse([
+        'debug' => [
+            'token_from_headers' => $token,
+            'token_from_server' => $serverToken,
+            'apache_headers' => $apacheHeaders,
+            'all_headers' => $request->headers->all(),
+            'method' => $request->getMethod(),
+        ]
+    ]);
+}
 
     // Recuperer les marks associé à l'espace
     #[Route('/{id}/marks', name: 'marks', methods: ['GET'])]

@@ -43,6 +43,7 @@ security:
     - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
     - { path: ^/api/test, roles: PUBLIC_ACCESS }     
     - { path: ^/api/debug, roles: PUBLIC_ACCESS } 
+    - { path: ^/api/space/browse, roles: PUBLIC_ACCESS } #TODO A SUPPRIMER
     - { path: ^/api, roles: ROLE_USER } 
 when@test:
     security:
