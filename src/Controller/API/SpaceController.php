@@ -28,7 +28,6 @@ class SpaceController extends AbstractController
     //     return $this->json($spaces, Response::HTTP_OK, [], ['groups' => 'space_list']);
     // }
     #[Route('/browse', name: 'browse', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')] 
     public function browse(Request $request): JsonResponse
 {
     // Debug
