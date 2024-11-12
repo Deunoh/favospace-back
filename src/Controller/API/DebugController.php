@@ -6,11 +6,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api', name: 'app_debug_', format: 'json')]
 class DebugController extends AbstractController
 {
     #[Route('/debug', name: 'debug', methods: ['GET'])]
+    #[IsGranted('PUBLIC_ACCESS')] 
     public function debug(Request $request): JsonResponse
     {
         return new JsonResponse([
@@ -25,6 +27,7 @@ class DebugController extends AbstractController
     }
 
     #[Route('/test', name: 'test', methods: ['GET'])]
+    #[IsGranted('PUBLIC_ACCESS')] 
     public function test(): JsonResponse
     {
         return new JsonResponse([
