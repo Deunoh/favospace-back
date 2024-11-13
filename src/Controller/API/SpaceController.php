@@ -111,7 +111,7 @@ class SpaceController extends AbstractController
             );
         }
     }
-    #[Route('/{id}/edit', name:'edit', methods:['PATCH'])]
+    #[Route('/{id}/edit', name:'edit', methods:['PUT'])]
     #[IsGranted('ROLE_USER')]
     public function edit(
         Space $space,
