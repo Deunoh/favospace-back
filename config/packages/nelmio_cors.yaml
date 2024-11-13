@@ -3,7 +3,7 @@ nelmio_cors:
         origin_regex: true
         allow_credentials: true
         allow_origin: ['http://localhost:5173', 'https://favospace.fr']
-        allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+        allow_methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS']
         allow_headers: ['Content-Type', 'Authorization']
         expose_headers: ['Authorization', 'Link']
         max_age: 3600
@@ -11,6 +11,6 @@ nelmio_cors:
         '^/':  # Pour toutes les routes
             allow_origin: ['http://localhost:5173', 'https://favospace.fr']
             allow_headers: ['Content-Type', 'Authorization']
-            allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+            allow_methods: ['GET', 'POST','PATCH', 'PUT', 'DELETE', 'OPTIONS']
             allow_credentials: true
             max_age: 3600
