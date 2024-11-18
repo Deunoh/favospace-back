@@ -31,6 +31,14 @@ class Mark
     #[ORM\JoinColumn(nullable: false)]
     private ?Space $space = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['space_marks'])]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'La description ne peut pas dépasser {{ limit }} caractères'
+    )]
+    private ?string $description = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -68,6 +76,18 @@ class Mark
     public function setSpace(?Space $space): static
     {
         $this->space = $space;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
 
         return $this;
     }
