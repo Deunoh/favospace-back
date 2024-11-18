@@ -42,6 +42,9 @@ class MarkController extends AbstractController
         $mark = new Mark();
         $mark->setName($data['name']);
         $mark->setUrl($data['url']);
+        if (isset($data['description'])) {
+            $mark->setDescription($data['description']);
+        }
 
         // 4. Je recupere le space de l'utilisateur en fonction de l'id envoyé
         $space = $spaceRepository->find($data['spaceId']);
