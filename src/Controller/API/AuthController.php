@@ -3,10 +3,13 @@
 namespace App\Controller\API;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -104,5 +107,72 @@ class AuthController extends AbstractController
             ], 400);
         }
     
+    }
+
+    #[Route('/forgot-password', name: 'api_forgot_password', methods: ['POST'])]
+    public function forgotPassword(Request $request, MailerInterface $mailer, EntityManagerInterface $em, UserRepository $userRepository): JsonResponse
+    {
+        $email = json_decode($request->getContent(), true);
+        // $email = $serializer->deserialize($request->getContent(), User::class, 'json');                                                               
+        // Je verifie si l'utilisateur existe, ici je le cherche grace à l'adresse mail renseignée
+        $user = $userRepository->findOneBy(['email' => $email]);
+        // dd($user)
+
+        if (!$user) {
+            return new JsonResponse(['message' => 'Utilisateur introuvable.'], 404);
+        }
+
+        // Je génére un token de reinitialisation 
+        $resetToken = bin2hex(random_bytes(32));
+        $user->setResetToken($resetToken);
+        $user->setTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
+        $em->flush();
+
+        // J'envoi le mail avec le lien de reinitalisation
+        // https://www.php.net/manual/fr/function.sprintf.php
+        $resetLink = sprintf('https://favospace.fr/reset-password/%s', $resetToken); 
+        $email = (new Email())
+            ->from('contact.favospace@gmail.com')
+            ->to($user->getEmail())
+            ->subject('Réinitialisation de votre mot de passe')
+            ->html(sprintf('<p>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="%s">Réinitialiser</a></p>', $resetLink));
+
+        $mailer->send($email);
+
+        return new JsonResponse(['message' => 'Un email de réinitialisation a été envoyé.']);
+    }
+
+    #[Route('/reset-password', name: 'api_reset_password', methods: ['POST'])]
+    public function resetPassword(Request $request, UserRepository $userRepository, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    {
+        // Décoder les données JSON de la requête
+        $data = json_decode($request->getContent(), true);
+        $token = $data['token'] ?? null;
+        $newPassword = $data['password'] ?? null;
+
+        // Il faut le token ET le mot de passe
+        if (!$token || !$newPassword) {
+            return new JsonResponse(['message' => 'Une erreur s\est produite, veuillez réessayer'], 400);
+        }
+
+        $user = $userRepository->findOneBy(['resetToken' => $token]);
+        // dd($user);
+
+        // Token toujours valide ?
+        if (!$user || $user->getTokenExpiresAt() < new \DateTimeImmutable()) {
+            return new JsonResponse(['message' => 'Le lien est expiré, veuillez réessayer.'], 400);
+        }
+
+        // Hasher le nouveau mot de passe, voir pour les verifications
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setPassword($hashedPassword);
+
+        // reset
+        $user->setResetToken(null);
+        $user->setTokenExpiresAt(null);
+
+        $em->flush();
+
+        return new JsonResponse(['message' => 'Mot de passe réinitialisé avec succès.']);
     }
 }

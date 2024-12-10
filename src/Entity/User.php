@@ -83,6 +83,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private Collection $spaces;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetToken = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $tokenExpiresAt = null;
+
     public function __construct()
     {
         $this->spaces = new ArrayCollection();
@@ -201,6 +207,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $space->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): static
+    {
+        $this->resetToken = $resetToken;
+
+        return $this;
+    }
+
+    public function getTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->tokenExpiresAt;
+    }
+
+    public function setTokenExpiresAt(?\DateTimeImmutable $tokenExpiresAt): static
+    {
+        $this->tokenExpiresAt = $tokenExpiresAt;
 
         return $this;
     }
