@@ -4,6 +4,7 @@ namespace App\Controller\API;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,7 +25,8 @@ class AuthController extends AbstractController
         UserPasswordHasherInterface $hasher, 
         EntityManagerInterface $em, 
         SerializerInterface $serializer,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        EmailService $emailService
     ): JsonResponse 
     {
         try {
@@ -49,6 +51,9 @@ class AuthController extends AbstractController
             
             $em->persist($user);
             $em->flush();
+
+            // Envoi du mail de bienvenue
+            $emailService->sendWelcomeEmail($user);
             
             return $this->json([
               'status' => 'success',
