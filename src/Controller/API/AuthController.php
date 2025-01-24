@@ -21,14 +21,13 @@ class AuthController extends AbstractController
 {
     #[Route('/register', methods: ['POST'])]
     public function register(
-        Request $request, 
-        UserPasswordHasherInterface $hasher, 
-        EntityManagerInterface $em, 
+        Request $request,
+        UserPasswordHasherInterface $hasher,
+        EntityManagerInterface $em,
         SerializerInterface $serializer,
         ValidatorInterface $validator,
         EmailService $emailService
-    ): JsonResponse 
-    {
+    ): JsonResponse {
         try {
             $user = $serializer->deserialize($request->getContent(), User::class, 'json');
 
@@ -48,36 +47,99 @@ class AuthController extends AbstractController
             $hashedPassword = $hasher->hashPassword($user, $user->getPassword());
             $user->setPassword($hashedPassword);
             $user->setRoles(['ROLE_USER']);
-            
+
             $em->persist($user);
             $em->flush();
 
             // Envoi du mail de bienvenue
             $emailService->sendWelcomeEmail($user);
-            
+
             return $this->json([
-              'status' => 'success',
-              'message' => 'Utilisateur enrengistré !'
-          ], 201);
+                'status' => 'success',
+                'message' => 'Utilisateur enrengistré !'
+            ], 201);
         } catch (\Exception $e) {
             return $this->json([
                 'error' => 'Erreur lors de la création: ' . $e->getMessage()
             ], 400);
         }
     }
+    #[Route('/modify-user', methods: ['PUT'])]
+public function modifyUser(
+    Request $request,
+    EntityManagerInterface $em,
+    ValidatorInterface $validator,
+    SerializerInterface $serializer
+): JsonResponse {
+
+    $user = $this->getUser(); 
+
+    if (!$user instanceof User) {
+        return $this->json([
+            'status' => 'error',
+            'message' => 'Non authentifié'
+        ], 401);
+    }
+
+    // Je deseriaize les données de la requête pour les mettre dans l'objet User
+    try {
+        $serializer->deserialize(
+            $request->getContent(),
+            get_class($user),
+            'json',
+            ['object_to_populate' => $user]
+        );
+    } catch (\Exception $e) {
+        return new JsonResponse(['message' => 'Données invalides', 'error' => $e->getMessage()], 400);
+    }
+
+    // Validation des données
+    $errors = $validator->validate($user);
+
+    if (count($errors) > 0) {
+        $errorsArray = [];
+        foreach ($errors as $error) {
+            $errorsArray[$error->getPropertyPath()][] = $error->getMessage();
+        }
+        return $this->json([
+            'status' => 'error',
+            'errors' => $errorsArray
+        ], 400);
+    }
+
+    // Sauvegarde en base de données
+    try {
+        $em->persist($user);
+        $em->flush();
+
+        return new JsonResponse([
+            'message' => 'Informations mises à jour avec succès',
+            'user' => [
+                'id' => $user->getId(),
+                'name' => $user->getName(),
+                'email' => $user->getEmail(),
+            ],
+        ], 200);
+    } catch (\Exception $e) {
+        return new JsonResponse([
+            'message' => 'Une erreur est survenue lors de la mise à jour',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
     #[Route('/verify-user', methods: ['GET'])]
     public function verifyUser(): JsonResponse
     {
         /** @var User|null */
         $user = $this->getUser();
-    
+
         if (!$user instanceof User) {
             return $this->json([
                 'status' => 'error',
                 'message' => 'Non authentifié'
             ], 401);
         }
-    
+
         return $this->json([
             'user' => [
                 'id' => $user->getId(),
@@ -87,7 +149,7 @@ class AuthController extends AbstractController
         ]);
     }
     #[Route('/delete-account', methods: ['DELETE'])]
-    public function deleteAccount(EntityManagerInterface $em ): JsonResponse 
+    public function deleteAccount(EntityManagerInterface $em): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -97,10 +159,10 @@ class AuthController extends AbstractController
                     'message' => 'Utilisateur non authentifié'
                 ], 401);
             }
-    
+
             $em->remove($user);
             $em->flush();
-    
+
             return $this->json([
                 'status' => 'success',
                 'message' => 'Compte supprimé avec succès'
@@ -111,7 +173,6 @@ class AuthController extends AbstractController
                 'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
             ], 400);
         }
-    
     }
 
     #[Route('/forgot-password', name: 'api_forgot_password', methods: ['POST'])]
@@ -135,7 +196,7 @@ class AuthController extends AbstractController
 
         // J'envoi le mail avec le lien de reinitalisation
         // https://www.php.net/manual/fr/function.sprintf.php
-        $resetLink = sprintf('https://favospace.fr/reset-password/%s', $resetToken); 
+        $resetLink = sprintf('https://favospace.fr/reset-password/%s', $resetToken);
         $email = (new Email())
             ->from('contact.favospace@gmail.com')
             ->to($user->getEmail())
