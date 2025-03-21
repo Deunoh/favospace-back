@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -65,68 +66,68 @@ class AuthController extends AbstractController
         }
     }
     #[Route('/modify-user', methods: ['PUT'])]
-public function modifyUser(
-    Request $request,
-    EntityManagerInterface $em,
-    ValidatorInterface $validator,
-    SerializerInterface $serializer
-): JsonResponse {
+    public function modifyUser(
+        Request $request,
+        EntityManagerInterface $em,
+        ValidatorInterface $validator,
+        SerializerInterface $serializer
+    ): JsonResponse {
 
-    $user = $this->getUser(); 
+        $user = $this->getUser();
 
-    if (!$user instanceof User) {
-        return $this->json([
-            'status' => 'error',
-            'message' => 'Non authentifié'
-        ], 401);
-    }
-
-    // Je deseriaize les données de la requête pour les mettre dans l'objet User
-    try {
-        $serializer->deserialize(
-            $request->getContent(),
-            get_class($user),
-            'json',
-            ['object_to_populate' => $user]
-        );
-    } catch (\Exception $e) {
-        return new JsonResponse(['message' => 'Données invalides', 'error' => $e->getMessage()], 400);
-    }
-
-    // Validation des données
-    $errors = $validator->validate($user);
-
-    if (count($errors) > 0) {
-        $errorsArray = [];
-        foreach ($errors as $error) {
-            $errorsArray[$error->getPropertyPath()][] = $error->getMessage();
+        if (!$user instanceof User) {
+            return $this->json([
+                'status' => 'error',
+                'message' => 'Non authentifié'
+            ], 401);
         }
-        return $this->json([
-            'status' => 'error',
-            'errors' => $errorsArray
-        ], 400);
-    }
 
-    // Sauvegarde en base de données
-    try {
-        $em->persist($user);
-        $em->flush();
+        // Je deseriaize les données de la requête pour les mettre dans l'objet User
+        try {
+            $serializer->deserialize(
+                $request->getContent(),
+                get_class($user),
+                'json',
+                ['object_to_populate' => $user]
+            );
+        } catch (\Exception $e) {
+            return new JsonResponse(['message' => 'Données invalides', 'error' => $e->getMessage()], 400);
+        }
 
-        return new JsonResponse([
-            'message' => 'Informations mises à jour avec succès',
-            'user' => [
-                'id' => $user->getId(),
-                'name' => $user->getName(),
-                'email' => $user->getEmail(),
-            ],
-        ], 200);
-    } catch (\Exception $e) {
-        return new JsonResponse([
-            'message' => 'Une erreur est survenue lors de la mise à jour',
-            'error' => $e->getMessage(),
-        ], 500);
+        // Validation des données
+        $errors = $validator->validate($user);
+
+        if (count($errors) > 0) {
+            $errorsArray = [];
+            foreach ($errors as $error) {
+                $errorsArray[$error->getPropertyPath()][] = $error->getMessage();
+            }
+            return $this->json([
+                'status' => 'error',
+                'errors' => $errorsArray
+            ], 400);
+        }
+
+        // Sauvegarde en base de données
+        try {
+            $em->persist($user);
+            $em->flush();
+
+            return new JsonResponse([
+                'message' => 'Informations mises à jour avec succès',
+                'user' => [
+                    'id' => $user->getId(),
+                    'name' => $user->getName(),
+                    'email' => $user->getEmail(),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'message' => 'Une erreur est survenue lors de la mise à jour',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
-}
     #[Route('/verify-user', methods: ['GET'])]
     public function verifyUser(): JsonResponse
     {
@@ -240,5 +241,46 @@ public function modifyUser(
         $em->flush();
 
         return new JsonResponse(['message' => 'Mot de passe réinitialisé avec succès.']);
+    }
+
+    #[Route('/auth/google', name: 'auth_google', methods: ['POST'])]
+    public function googleAuth(
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+        JWTTokenManagerInterface $jwtManager
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        $email = $data['email'] ?? null;
+        $baseName = $data['name'] ?? 'User' . random_int(1000, 9999);
+
+        if (!$email) {
+            return $this->json(['error' => 'Email manquant'], 400);
+        }
+
+        $user = $userRepository->findOneBy(['email' => $email]);
+
+        if (!$user) {
+            // Générer un nom unique si l'utilisateur existe deja en bdd
+            $username = $baseName;
+            $i = 1;
+            while ($userRepository->findOneBy(['name' => $username])) {
+                $username = $baseName . $i;
+                $i++;
+            }
+
+            $user = new User();
+            $user->setEmail($email);
+            $user->setName($username);
+            $user->setRoles(['ROLE_USER']);
+            $user->setPassword(password_hash(bin2hex(random_bytes(12)), PASSWORD_DEFAULT));
+
+            $em->persist($user);
+            $em->flush();
+        }
+
+        $token = $jwtManager->create($user);
+
+        return $this->json(['token' => $token], 200);
     }
 }
